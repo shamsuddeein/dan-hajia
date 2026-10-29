@@ -89,7 +89,7 @@ export default function Hero() {
             <div className="w-full h-full min-h-[380px] lg:min-h-[500px] bg-s2 border border-s4 relative overflow-hidden group rounded-sm">
               <img
                 src={heroImage}
-                alt="Documentary interior view of imported Mercedes-Benz sedan"
+                alt="Mercedes-Benz sedan interior from the supplied company archive"
                 className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
                 loading="eager"
               />

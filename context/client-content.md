@@ -88,9 +88,9 @@ All 32 supplied manifest records are preserved, categorized, and accessible in t
 
 | Category | Slug | Photos/Graphics | Videos | Total | Source IDs & Coverage |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| **Vehicles** | `vehicles` | 2 | 7 | **9** | IDs 1, 2 (Mercedes photos); IDs 13, 14, 15, 18, 19, 20, 30 (Walkaround & lot videos) |
-| **Motorcycles** | `motorcycles` | 4 | 4 | **8** | IDs 3, 4, 5, 6 (Aprilia photos); IDs 16, 17, 21, 23 (Walkaround & demo videos) |
-| **Shipping & Logistics** | `shipping` | 0 | 6 | **6** | IDs 22, 26, 27, 28, 31, 32 (Container loading, strapping, port docks, transporter) |
+| **Vehicles** | `vehicles` | 2 | 7 | **9** | IDs 1, 2 (Mercedes photos); IDs 13, 14, 17, 19, 20, 21, 30 (Walkaround & lot videos) |
+| **Motorcycles** | `motorcycles` | 4 | 4 | **8** | IDs 3, 4, 5, 6 (Aprilia photos); IDs 23, 26, 27, 28 (Walkaround & demo videos) |
+| **Shipping & Logistics** | `shipping` | 0 | 6 | **6** | IDs 15, 16, 18, 22, 31, 32 (Container loading, strapping, port docks, transporter) |
 | **Showroom & Lot Visits** | `visits` | 0 | 3 | **3** | IDs 24, 25, 29 (Showroom motorcycle display and car lot evening visits) |
 | **Company Brand** | `branding` | 1 | 0 | **1** | ID 10 (Dan Hajiya Investment emblem design) |
 | **Promotional Graphics** | `promotional` | 5 | 0 | **5** | IDs 7, 8, 9, 11, 12 (Archived promotional artwork with historical disclaimer) |

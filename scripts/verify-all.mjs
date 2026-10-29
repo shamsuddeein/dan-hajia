@@ -262,6 +262,143 @@ async function run() {
   assert(ariaHiddenWarnings.length === 0, `No blocked aria-hidden console warnings (count: ${ariaHiddenWarnings.length})`);
 
   // -------------------------------------------------------------------------
+  // 4B. Desktop Media Viewer Bounded Height & Focus Restoration Across Close Triggers
+  // -------------------------------------------------------------------------
+  console.log('\n[SECTION 4B] Testing Desktop Media Viewer Height (1440x900) & Focus Restoration...');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(BASE_URL, { waitUntil: 'networkidle' });
+
+  // 1. Desktop Bounded Height Verification (Source 1 - Image)
+  const card1Button = page.locator('#gallery .grid > div').first().locator('button').first();
+  await card1Button.click();
+  await page.waitForTimeout(400);
+
+  const desktopModalPortal = page.locator('#gallery-dialog-portal');
+  assert(await desktopModalPortal.isVisible(), 'Gallery modal is visible on desktop (1440x900)');
+
+  const desktopGeometry = await page.evaluate(() => {
+    const portal = document.getElementById('gallery-dialog-portal');
+    const dialog = portal?.querySelector('.relative.z-10.bg-s2') || portal;
+    const mediaContainer = portal?.querySelector('img, video')?.parentElement;
+    const imgOrVideo = mediaContainer?.querySelector('img, video');
+    if (!dialog || !mediaContainer) return null;
+
+    const dRect = dialog.getBoundingClientRect();
+    const cRect = mediaContainer.getBoundingClientRect();
+    const mRect = imgOrVideo ? imgOrVideo.getBoundingClientRect() : null;
+
+    return {
+      dialogHeight: dRect.height,
+      dialogWidth: dRect.width,
+      containerHeight: cRect.height,
+      containerWidth: cRect.width,
+      mediaHeight: mRect ? mRect.height : null,
+      mediaWidth: mRect ? mRect.width : null,
+      windowHeight: window.innerHeight,
+    };
+  });
+
+  assert(desktopGeometry !== null, 'Desktop modal dialog and media container found');
+  if (desktopGeometry) {
+    console.log(`Desktop Geometry at 1440x900: containerHeight=${desktopGeometry.containerHeight.toFixed(1)}px, dialogHeight=${desktopGeometry.dialogHeight.toFixed(1)}px`);
+    assert(
+      desktopGeometry.containerHeight >= 500 && desktopGeometry.containerHeight <= 600,
+      `Desktop media container height is bounded and prominent (~540px, actual: ${desktopGeometry.containerHeight.toFixed(1)}px)`
+    );
+    assert(
+      desktopGeometry.dialogHeight >= 550 && desktopGeometry.dialogHeight <= 880,
+      `Desktop dialog height utilizes available desktop space (~630px, actual: ${desktopGeometry.dialogHeight.toFixed(1)}px)`
+    );
+    assert(
+      desktopGeometry.containerHeight > 250,
+      `Desktop media container is NOT collapsed to 180px minimum (actual: ${desktopGeometry.containerHeight.toFixed(1)}px)`
+    );
+  }
+
+  // Capture desktop modal screenshot for verification evidence
+  await page.screenshot({ path: path.join(ARTIFACT_DIR, 'audit-desktop-modal-1440x900.png') });
+
+  // 2. Navigation check: Next button does NOT restore focus to opener while modal is open
+  const nextBtn = page.locator('#gallery-dialog-portal button[aria-label="Next media record"]');
+  await nextBtn.click();
+  await page.waitForTimeout(300);
+
+  const focusDuringNavigation = await page.evaluate(() => {
+    const active = document.activeElement;
+    const dialog = document.getElementById('gallery-dialog-portal');
+    return {
+      activeInDialog: dialog ? dialog.contains(active) : false,
+      activeTag: active ? active.tagName : null,
+      activeAriaLabel: active ? active.getAttribute('aria-label') : null,
+    };
+  });
+  assert(focusDuringNavigation.activeInDialog, 'Focus remains inside gallery dialog during record navigation');
+
+  // 3. Focus Restoration Check A: Escape Key
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+
+  const focusRestoredAfterEscape = await page.evaluate(() => {
+    const active = document.activeElement;
+    const card1Btn = document.querySelector('#gallery .grid > div:first-child button');
+    const isRootInert = document.getElementById('root')?.hasAttribute('inert');
+    return {
+      isExactOpener: active === card1Btn,
+      isRootInert,
+      activeTag: active?.tagName,
+      activeText: active?.textContent?.trim()?.slice(0, 30),
+    };
+  });
+  assert(focusRestoredAfterEscape.isExactOpener, 'Focus restored to exact thumbnail opener after Escape key dismissal');
+  assert(!focusRestoredAfterEscape.isRootInert, 'Root is no longer inert after Escape key dismissal');
+
+  // 4. Focus Restoration Check B: Close Button Click
+  const card2Button = page.locator('#gallery .grid > div').nth(1).locator('button').first();
+  await card2Button.click();
+  await page.waitForTimeout(400);
+  assert(await desktopModalPortal.isVisible(), 'Modal opened for Card 2');
+
+  const closeButton = page.locator('#gallery-dialog-portal button[aria-label="Close media viewer"]');
+  await closeButton.click();
+  await page.waitForTimeout(300);
+
+  const focusRestoredAfterCloseBtn = await page.evaluate(() => {
+    const active = document.activeElement;
+    const card2Btn = document.querySelectorAll('#gallery .grid > div')[1]?.querySelector('button');
+    const isRootInert = document.getElementById('root')?.hasAttribute('inert');
+    return {
+      isExactOpener: active === card2Btn,
+      isRootInert,
+      activeTag: active?.tagName,
+    };
+  });
+  assert(focusRestoredAfterCloseBtn.isExactOpener, 'Focus restored to exact thumbnail opener after Close button click');
+  assert(!focusRestoredAfterCloseBtn.isRootInert, 'Root is no longer inert after Close button dismissal');
+
+  // 5. Focus Restoration Check C: Backdrop Click
+  const card3Button = page.locator('#gallery .grid > div').nth(2).locator('button').first();
+  await card3Button.click();
+  await page.waitForTimeout(400);
+  assert(await desktopModalPortal.isVisible(), 'Modal opened for Card 3');
+
+  // Click backdrop outside modal card (e.g. at top-left 30, 30)
+  await page.mouse.click(30, 30);
+  await page.waitForTimeout(300);
+
+  const focusRestoredAfterBackdrop = await page.evaluate(() => {
+    const active = document.activeElement;
+    const card3Btn = document.querySelectorAll('#gallery .grid > div')[2]?.querySelector('button');
+    const isRootInert = document.getElementById('root')?.hasAttribute('inert');
+    return {
+      isExactOpener: active === card3Btn,
+      isRootInert,
+      activeTag: active?.tagName,
+    };
+  });
+  assert(focusRestoredAfterBackdrop.isExactOpener, 'Focus restored to exact thumbnail opener after Backdrop click dismissal');
+  assert(!focusRestoredAfterBackdrop.isRootInert, 'Root is no longer inert after Backdrop dismissal');
+
+  // -------------------------------------------------------------------------
   // 5. Cross-Section Single Video Playback Coordination
   // -------------------------------------------------------------------------
   console.log('\n[SECTION 5] Testing Page-Wide Single Video Playback Coordination...');
@@ -348,6 +485,12 @@ async function run() {
   console.log('\n[SECTION 7] Verifying Neutral Hero Caption & Confirmed Values...');
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(BASE_URL, { waitUntil: 'networkidle' });
+
+  const heroImgAlt = await page.locator('#home img').first().getAttribute('alt');
+  assert(
+    heroImgAlt === 'Mercedes-Benz sedan interior from the supplied company archive',
+    `Hero photo alt text uses exact neutral wording ("${heroImgAlt}")`
+  );
 
   const heroCaption = await page.locator('#home .font-serif.text-sm').innerText();
   const heroSubCaption = await page.locator('#home .font-mono.text-\\[10px\\]').innerText();

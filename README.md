@@ -39,3 +39,4 @@ npm run build
 # Run Playwright verification suite
 node scripts/verify-all.mjs
 ```
+

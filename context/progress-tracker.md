@@ -67,6 +67,18 @@ Update this file after every meaningful implementation change.
     - **Neutral Hero Caption**: Changed hero image caption to "Mercedes-Benz Luxury Interior" with neutral sub-caption "Mercedes-Benz interior — supplied company archive".
     - **Reconciled Documentation**: Reconciled `client-content.md` with company profile structure, removing obsolete catalogue/SAMPLE instructions. Corrected visit recording IDs to **24, 25, 29**.
     - **Enforced Verification Suite**: Rewrote `scripts/verify-all.mjs` with 40 programmatic assertions and nonzero exit on failure. All 40 assertions passed. Production build succeeded (0 errors).
+11. **Final UI Corrections & Focus Polish (2026-10-29)**:
+    - **Gallery Focus Restoration After Removing Inert**:
+      - Modal close handler cleanly removes `inert` from `#root` and defers focus restoration via `requestAnimationFrame` to ensure React unmount and DOM inert removal have settled.
+      - Isolated modal open state (`isOpen`) from item index; navigating between records via Arrow keys or Prev/Next buttons maintains focus within the dialog without premature opener focus restoration.
+      - Verified across all three close triggers: **Escape key**, **modal close button**, and **backdrop click** all return `document.activeElement` to the exact thumbnail opener with `inert` cleanly removed.
+    - **Desktop Media Viewer Bounded Height**:
+      - Removed `flex-1` from the media body container and applied explicit responsive height: `clamp(220px, 60vh, calc(94vh - 120px))`.
+      - At 1440×900 desktop, container measures 540.0px high and the dialog measures 632.0px high, completely eliminating the previous 180px collapse and providing an enlarged view for 4:3 photos and 16:9/9:16 videos.
+      - At 844×390 landscape, media container measures 234.0px and total dialog measures 320.0px, keeping portrait videos, native controls, close button, and captions fully visible.
+    - **Neutral Hero Photo Alt Text**: Updated `src/sections/Hero.jsx` image alt attribute to exact neutral wording: `"Mercedes-Benz sedan interior from the supplied company archive"`.
+    - **Reconciled Media Category Table**: Updated `context/client-content.md` source IDs mapping to match exact manifest records across all 6 categories.
+    - **Expanded Enforced Verification Suite**: Added dedicated desktop geometry and focus restoration assertions across all close triggers to `scripts/verify-all.mjs`. All **55/55 programmatic assertions passed** with zero failures. Production build succeeded cleanly (`npm run build`).
 
 ---
 

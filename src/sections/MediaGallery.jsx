@@ -68,25 +68,36 @@ export default function MediaGallery() {
         if (!v.paused) v.pause();
       });
     }
+    const opener = openerRef.current;
     setModalItem(null);
-    if (openerRef.current) {
-      openerRef.current.focus();
+    const rootElement = document.getElementById('root');
+    if (rootElement) {
+      rootElement.removeAttribute('inert');
+    }
+    if (opener && typeof opener.focus === 'function') {
+      requestAnimationFrame(() => {
+        opener.focus();
+      });
     }
   };
 
   // Navigation inside modal viewer
   const handlePrevItem = () => {
-    if (!modalItem) return;
-    const currentIndex = filteredItems.findIndex((it) => it.id === modalItem.id);
-    const prevIndex = (currentIndex - 1 + filteredItems.length) % filteredItems.length;
-    setModalItem(filteredItems[prevIndex]);
+    setModalItem((current) => {
+      if (!current) return null;
+      const currentIndex = filteredItems.findIndex((it) => it.id === current.id);
+      const prevIndex = (currentIndex - 1 + filteredItems.length) % filteredItems.length;
+      return filteredItems[prevIndex];
+    });
   };
 
   const handleNextItem = () => {
-    if (!modalItem) return;
-    const currentIndex = filteredItems.findIndex((it) => it.id === modalItem.id);
-    const nextIndex = (currentIndex + 1) % filteredItems.length;
-    setModalItem(filteredItems[nextIndex]);
+    setModalItem((current) => {
+      if (!current) return null;
+      const currentIndex = filteredItems.findIndex((it) => it.id === current.id);
+      const nextIndex = (currentIndex + 1) % filteredItems.length;
+      return filteredItems[nextIndex];
+    });
   };
 
   // Page-wide single active video playback coordination
@@ -106,9 +117,11 @@ export default function MediaGallery() {
     };
   }, []);
 
+  const isOpen = Boolean(modalItem);
+
   // Accessible Keyboard trap, inert background, and body scroll lock for portaled modal
   useEffect(() => {
-    if (!modalItem) return;
+    if (!isOpen) return;
 
     // Set background content inert so focus and assistive tech cannot reach outside the portaled dialog
     const rootElement = document.getElementById('root');
@@ -165,20 +178,27 @@ export default function MediaGallery() {
     document.body.style.overflow = 'hidden';
 
     // Focus close button on open
-    setTimeout(() => {
+    const openTimer = setTimeout(() => {
       if (modalCloseButtonRef.current) {
         modalCloseButtonRef.current.focus();
       }
     }, 50);
 
     return () => {
+      clearTimeout(openTimer);
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = originalOverflow;
       if (rootElement) {
         rootElement.removeAttribute('inert');
       }
+      const opener = openerRef.current;
+      if (opener && typeof opener.focus === 'function') {
+        requestAnimationFrame(() => {
+          opener.focus();
+        });
+      }
     };
-  }, [modalItem, filteredItems]);
+  }, [isOpen]);
 
   const formatDuration = (seconds) => {
     if (!seconds) return null;
@@ -415,12 +435,11 @@ export default function MediaGallery() {
                 </div>
               </div>
 
-              {/* Media Body Container: bounded size using object-fit contain that guarantees portrait fit */}
+              {/* Media Body Container: bounded size using object-fit contain that guarantees portrait fit and desktop prominence */}
               <div
-                className="relative min-h-0 flex-1 w-full bg-black overflow-hidden flex items-center justify-center"
+                className="relative w-full bg-black overflow-hidden flex items-center justify-center shrink-0"
                 style={{
-                  height: 'min(58vh, calc(100vh - 140px))',
-                  minHeight: '180px',
+                  height: 'clamp(220px, 60vh, calc(94vh - 120px))',
                 }}
               >
                 {modalItem.type === 'video' ? (
